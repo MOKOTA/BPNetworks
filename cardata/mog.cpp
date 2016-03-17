@@ -1,12 +1,37 @@
-#include<opencv/cv.h>
+#include<opencv\cv.h>
 #include<stdlib.h>
-#include<opencv2/highgui/highgui.hpp>
+#include<opencv2\highgui\highgui.hpp>
+#include<opencv2\imgproc\imgproc.hpp>
+
 using namespace std;
 using namespace cv;
+IplImage* subnoise(IplImage* img)
+{
+	/*
+	IplImage* binary = cvCreateImage(cvSize(img->width, img->height), img->depth, 1);
+	cvThreshold(img, binary, 100, 255, CV_THRESH_BINARY);
+	CvMemStorage* pcvMStorage = cvCreateMemStorage();
+	CvSeq* pcvSeq = NULL;
+	cvFindContours(binary, pcvMStorage, &pcvSeq, sizeof(CvContour), CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));*/
+	IplImage *pOutlineImage = cvCreateImage(cvSize(img->width,img->height), img->depth, 1);
+	//int nLevels = 5;
+	//cvRectangle(pOutlineImage, cvPoint(0, 0), cvPoint(pOutlineImage->width, pOutlineImage->height),
+	//	CV_RGB(255, 255, 255), CV_FILLED);
+	//cvDrawContours(pOutlineImage, pcvSeq, CV_RGB(255, 0, 0), CV_RGB(0, 255, 0), nLevels, 2);
+	//cvReleaseImage(&result);
+	//cvReleaseImage(&binary);
+	cvSmooth(img, pOutlineImage, CV_MEDIAN, 0.5, 0.5);
+	return pOutlineImage;
 
+
+}
 int main(int argc,char**argv)
 {
-    char* filename = argv[1];
+	char* filename;
+	if (argc <= 1)
+		filename = "F:\\c++\\ConsoleApplication3\\Video.avi";
+	else
+		filename = argv[1];
     CvCapture* capture = cvCreateFileCapture(filename);
 	IplImage *mframe,*current,*frg,*test;
 	int *fg,*bg_bw,*rank_ind;
@@ -156,21 +181,27 @@ int main(int argc,char**argv)
         }
 
         mframe = cvQueryFrame(capture);
+		IplImage* car = subnoise(frg);
         cvShowImage("fore",frg);
         cvShowImage("back",test);
-        char s=cvWaitKey(33);
+		cvShowImage("car", car);
+        char s=cvWaitKey(1);
+		cvReleaseImage(&car);
         if(s==27) break;
         free(rank_ind);
     }
 
-    free(fg);free(w);free(mean);free(sd);free(u_diff);free(rank);
+	free(fg); free(w); free(mean); free(sd); free(u_diff); free(rank); 
+	
+	
     cvNamedWindow("back",0);
     cvNamedWindow("fore",0);
+	cvReleaseImage(&frg);
+	cvReleaseImage(&test);
+
     cvReleaseCapture(&capture);
     cvDestroyWindow("fore");
     cvDestroyWindow("back");
     return 0;
 
 }
-
-
